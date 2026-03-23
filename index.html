@@ -1,0 +1,1573 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IAReferee — AI Dispute Resolution</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.10/dayjs.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+--accent:#4F8EF7;
+--accent-soft:rgba(79,142,247,0.12);
+--accent-glow:rgba(79,142,247,0.25);
+--green:#34D399;
+--green-soft:rgba(52,211,153,0.12);
+--red:#F87171;
+--red-soft:rgba(248,113,113,0.12);
+--amber:#FBBF24;
+--amber-soft:rgba(251,191,36,0.12);
+--purple:#A78BFA;
+--purple-soft:rgba(167,139,250,0.12);
+--font:'DM Sans',sans-serif;
+--mono:'DM Mono',monospace;
+--radius:12px;
+--radius-sm:8px;
+--radius-lg:16px;
+--sidebar-w:240px;
+--topbar-h:60px;
+--trans:all 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+[data-theme="dark"]{
+--bg:#0D0F14;
+--bg2:#13161D;
+--bg3:#1A1E28;
+--bg4:#232838;
+--border:rgba(255,255,255,0.07);
+--border-md:rgba(255,255,255,0.12);
+--text:#E8EAF0;
+--text2:#8B91A8;
+--text3:#5A6080;
+--sidebar-bg:#0D0F14;
+--card:#13161D;
+--card2:#1A1E28;
+--shadow:0 4px 24px rgba(0,0,0,0.4);
+--shadow-sm:0 2px 8px rgba(0,0,0,0.3);
+}
+[data-theme="light"]{
+--bg:#F4F6FA;
+--bg2:#FFFFFF;
+--bg3:#F0F2F8;
+--bg4:#E8ECF4;
+--border:rgba(0,0,0,0.07);
+--border-md:rgba(0,0,0,0.12);
+--text:#1A1D2E;
+--text2:#5A6080;
+--text3:#9AA0BC;
+--sidebar-bg:#FFFFFF;
+--card:#FFFFFF;
+--card2:#F4F6FA;
+--shadow:0 4px 24px rgba(0,0,0,0.08);
+--shadow-sm:0 2px 8px rgba(0,0,0,0.06);
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;min-height:100vh;display:flex;overflow:hidden}
+a{text-decoration:none;color:inherit}
+button{font-family:var(--font);cursor:pointer;border:none;outline:none}
+input,textarea,select{font-family:var(--font);outline:none}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border-md);border-radius:4px}
+
+.sidebar{
+width:var(--sidebar-w);
+min-height:100vh;
+background:var(--sidebar-bg);
+border-right:1px solid var(--border);
+display:flex;flex-direction:column;
+position:fixed;left:0;top:0;bottom:0;
+z-index:100;
+transition:var(--trans);
+}
+.sidebar-logo{
+padding:20px 20px 16px;
+display:flex;align-items:center;gap:10px;
+border-bottom:1px solid var(--border);
+}
+.logo-icon{
+width:34px;height:34px;
+background:linear-gradient(135deg,var(--accent),var(--purple));
+border-radius:10px;
+display:flex;align-items:center;justify-content:center;
+font-size:14px;color:#fff;font-weight:600;
+box-shadow:0 0 20px var(--accent-glow);
+}
+.logo-text{font-size:15px;font-weight:600;letter-spacing:-0.3px}
+.logo-text span{color:var(--accent)}
+.sidebar-section{padding:8px 12px 4px;font-size:10px;font-weight:500;letter-spacing:1.2px;color:var(--text3);text-transform:uppercase;margin-top:4px}
+.nav-item{
+display:flex;align-items:center;gap:10px;
+padding:9px 12px;margin:1px 8px;
+border-radius:var(--radius-sm);
+cursor:pointer;transition:var(--trans);
+color:var(--text2);font-size:13.5px;font-weight:400;
+position:relative;
+}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:var(--accent-soft);color:var(--accent);font-weight:500}
+.nav-item.active::before{content:'';position:absolute;left:-8px;top:50%;transform:translateY(-50%);width:3px;height:18px;background:var(--accent);border-radius:0 3px 3px 0}
+.nav-item i{width:16px;text-align:center;font-size:13px}
+.nav-badge{margin-left:auto;background:var(--accent);color:#fff;font-size:10px;font-weight:600;padding:1px 6px;border-radius:20px;min-width:18px;text-align:center}
+.sidebar-bottom{margin-top:auto;padding:12px;border-top:1px solid var(--border)}
+.user-card{display:flex;align-items:center;gap:10px;padding:8px;border-radius:var(--radius-sm);cursor:pointer;transition:var(--trans)}
+.user-card:hover{background:var(--bg3)}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--purple));display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;font-weight:600;flex-shrink:0}
+.user-info{flex:1;min-width:0}
+.user-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-role{font-size:11px;color:var(--text3)}
+.user-menu-btn{color:var(--text3);font-size:12px}
+
+.main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh;overflow:hidden}
+.topbar{
+height:var(--topbar-h);
+background:var(--bg2);
+border-bottom:1px solid var(--border);
+display:flex;align-items:center;
+padding:0 24px;gap:16px;
+position:sticky;top:0;z-index:50;
+}
+.topbar-title{font-size:15px;font-weight:600;flex:1}
+.topbar-breadcrumb{font-size:12px;color:var(--text3);flex:1}
+.topbar-breadcrumb span{color:var(--text)}
+.search-box{
+display:flex;align-items:center;gap:8px;
+background:var(--bg3);border:1px solid var(--border);
+border-radius:var(--radius-sm);padding:6px 12px;
+width:220px;transition:var(--trans);
+}
+.search-box:focus-within{border-color:var(--accent);background:var(--bg2)}
+.search-box input{background:none;border:none;color:var(--text);font-size:13px;width:100%}
+.search-box input::placeholder{color:var(--text3)}
+.search-box i{color:var(--text3);font-size:12px}
+.topbar-actions{display:flex;align-items:center;gap:8px}
+.icon-btn{
+width:34px;height:34px;border-radius:var(--radius-sm);
+background:var(--bg3);border:1px solid var(--border);
+display:flex;align-items:center;justify-content:center;
+cursor:pointer;transition:var(--trans);color:var(--text2);
+font-size:13px;
+}
+.icon-btn:hover{background:var(--bg4);color:var(--text)}
+.notif-dot{position:relative}
+.notif-dot::after{content:'';position:absolute;top:6px;right:6px;width:6px;height:6px;background:var(--red);border-radius:50%;border:2px solid var(--bg2)}
+
+.content{flex:1;overflow-y:auto;padding:24px}
+.page{display:none}
+.page.active{display:block;animation:fadeIn 0.25s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+.page-header{margin-bottom:24px}
+.page-header h1{font-size:22px;font-weight:600;letter-spacing:-0.4px}
+.page-header p{color:var(--text2);font-size:13px;margin-top:4px}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+@media(max-width:1100px){.grid-4{grid-template-columns:repeat(2,1fr)}.grid-3{grid-template-columns:1fr 1fr}}
+
+.card{
+background:var(--card);
+border:1px solid var(--border);
+border-radius:var(--radius);
+padding:20px;
+transition:var(--trans);
+box-shadow:var(--shadow-sm);
+}
+.card:hover{border-color:var(--border-md)}
+.card-sm{padding:16px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.card-title{font-size:13px;font-weight:500;color:var(--text2)}
+.card-value{font-size:28px;font-weight:600;letter-spacing:-0.5px;line-height:1.2}
+.card-delta{font-size:12px;margin-top:4px;display:flex;align-items:center;gap:4px}
+.delta-up{color:var(--green)}
+.delta-down{color:var(--red)}
+
+.stat-icon{
+width:36px;height:36px;border-radius:var(--radius-sm);
+display:flex;align-items:center;justify-content:center;font-size:15px;
+}
+.stat-icon.blue{background:var(--accent-soft);color:var(--accent)}
+.stat-icon.green{background:var(--green-soft);color:var(--green)}
+.stat-icon.red{background:var(--red-soft);color:var(--red)}
+.stat-icon.amber{background:var(--amber-soft);color:var(--amber)}
+.stat-icon.purple{background:var(--purple-soft);color:var(--purple)}
+
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500}
+.badge-blue{background:var(--accent-soft);color:var(--accent)}
+.badge-green{background:var(--green-soft);color:var(--green)}
+.badge-red{background:var(--red-soft);color:var(--red)}
+.badge-amber{background:var(--amber-soft);color:var(--amber)}
+.badge-purple{background:var(--purple-soft);color:var(--purple)}
+.badge-gray{background:var(--bg3);color:var(--text2)}
+
+.btn{
+display:inline-flex;align-items:center;gap:7px;
+padding:8px 16px;border-radius:var(--radius-sm);
+font-size:13px;font-weight:500;transition:var(--trans);cursor:pointer;
+}
+.btn-primary{background:var(--accent);color:#fff;border:none}
+.btn-primary:hover{background:#3d7de8;box-shadow:0 0 20px var(--accent-glow)}
+.btn-secondary{background:var(--bg3);color:var(--text);border:1px solid var(--border)}
+.btn-secondary:hover{background:var(--bg4)}
+.btn-danger{background:var(--red-soft);color:var(--red);border:1px solid rgba(248,113,113,0.2)}
+.btn-danger:hover{background:rgba(248,113,113,0.2)}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn-icon{width:30px;height:30px;padding:0;justify-content:center;border-radius:var(--radius-sm)}
+
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:11px;font-weight:500;color:var(--text3);letter-spacing:0.8px;text-transform:uppercase;padding:10px 16px;border-bottom:1px solid var(--border)}
+td{padding:12px 16px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text)}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--bg3)}
+
+.form-group{margin-bottom:16px}
+label{display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:6px}
+.input{
+width:100%;background:var(--bg3);border:1px solid var(--border);
+border-radius:var(--radius-sm);padding:9px 12px;
+color:var(--text);font-size:13px;transition:var(--trans);
+}
+.input:focus{border-color:var(--accent);background:var(--bg2)}
+.input::placeholder{color:var(--text3)}
+textarea.input{resize:vertical;min-height:100px}
+select.input{cursor:pointer}
+.input-group{display:flex;gap:8px}
+.input-group .input{flex:1}
+
+.divider{height:1px;background:var(--border);margin:20px 0}
+
+.timeline{display:flex;flex-direction:column;gap:0}
+.timeline-item{display:flex;gap:14px;padding-bottom:20px;position:relative}
+.timeline-item:not(:last-child)::before{content:'';position:absolute;left:15px;top:32px;bottom:0;width:1px;background:var(--border)}
+.timeline-dot{width:32px;height:32px;border-radius:50%;border:2px solid var(--border);background:var(--card);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;z-index:1}
+.timeline-dot.active{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.timeline-dot.done{border-color:var(--green);color:var(--green);background:var(--green-soft)}
+.timeline-content{flex:1;padding-top:4px}
+.timeline-title{font-size:13px;font-weight:500}
+.timeline-sub{font-size:12px;color:var(--text2);margin-top:2px}
+.timeline-time{font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:4px}
+
+.progress-bar{height:6px;background:var(--bg3);border-radius:20px;overflow:hidden;margin-top:8px}
+.progress-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--accent),var(--purple));transition:width 0.6s ease}
+
+.approval-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.approval-row:last-child{border-bottom:none}
+.approval-party{display:flex;align-items:center;gap:8px;flex:1;font-size:13px}
+.approval-status{display:flex;align-items:center;gap:6px;font-size:12px}
+.check-circle{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px}
+.check-circle.yes{background:var(--green-soft);color:var(--green)}
+.check-circle.no{background:var(--bg3);color:var(--text3);border:1px solid var(--border)}
+.check-circle.wait{background:var(--amber-soft);color:var(--amber)}
+
+.ruling-card{background:var(--bg3);border:1px solid var(--border-md);border-radius:var(--radius);padding:20px;margin-top:16px}
+.ruling-verdict{font-size:20px;font-weight:600;letter-spacing:-0.3px;margin-bottom:4px}
+.ruling-verdict.favor-a{color:var(--green)}
+.ruling-verdict.favor-b{color:var(--red)}
+.ruling-verdict.mixed{color:var(--amber)}
+.ruling-body{font-size:13px;color:var(--text2);line-height:1.7;margin-top:12px}
+.ruling-ref{
+background:var(--accent-soft);border:1px solid rgba(79,142,247,0.2);
+border-radius:var(--radius-sm);padding:12px;margin-top:14px;
+font-size:12px;color:var(--text2);font-family:var(--mono);
+}
+.ruling-ref-label{font-size:10px;font-weight:600;letter-spacing:1px;color:var(--accent);text-transform:uppercase;margin-bottom:4px}
+
+.ai-typing{display:flex;gap:4px;align-items:center;padding:12px 0}
+.ai-typing span{width:6px;height:6px;background:var(--accent);border-radius:50%;animation:bounce 1.2s infinite}
+.ai-typing span:nth-child(2){animation-delay:0.2s}
+.ai-typing span:nth-child(3){animation-delay:0.4s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+
+.doc-upload-zone{
+border:2px dashed var(--border-md);border-radius:var(--radius);
+padding:32px;text-align:center;cursor:pointer;transition:var(--trans);
+}
+.doc-upload-zone:hover,.doc-upload-zone.drag-over{border-color:var(--accent);background:var(--accent-soft)}
+.doc-upload-icon{font-size:32px;color:var(--text3);margin-bottom:10px}
+.doc-upload-text{font-size:13px;color:var(--text2)}
+.doc-upload-sub{font-size:12px;color:var(--text3);margin-top:4px}
+
+.doc-item{display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg3);border-radius:var(--radius-sm);margin-bottom:8px;border:1px solid var(--border)}
+.doc-icon{width:36px;height:36px;background:var(--accent-soft);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;color:var(--accent);font-size:15px;flex-shrink:0}
+.doc-info{flex:1;min-width:0}
+.doc-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.doc-meta{font-size:11px;color:var(--text3);margin-top:2px}
+.doc-actions{display:flex;gap:6px}
+
+.session-code{
+background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);
+padding:10px 14px;font-family:var(--mono);font-size:15px;font-weight:500;
+letter-spacing:2px;color:var(--accent);text-align:center;
+}
+
+.party-indicator{display:flex;align-items:center;gap:8px}
+.party-dot{width:8px;height:8px;border-radius:50%}
+.party-a .party-dot{background:var(--accent)}
+.party-b .party-dot{background:var(--purple)}
+
+.step-flow{display:flex;align-items:center;gap:0;margin-bottom:24px;overflow-x:auto;padding-bottom:4px}
+.step-item{display:flex;align-items:center;gap:0}
+.step-node{
+display:flex;flex-direction:column;align-items:center;
+min-width:100px;padding:0 8px;
+}
+.step-circle{
+width:32px;height:32px;border-radius:50%;
+display:flex;align-items:center;justify-content:center;
+font-size:12px;font-weight:600;
+border:2px solid var(--border);color:var(--text3);background:var(--card);
+transition:var(--trans);
+}
+.step-circle.done{border-color:var(--green);color:var(--green);background:var(--green-soft)}
+.step-circle.current{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.step-label{font-size:11px;color:var(--text3);margin-top:6px;text-align:center;white-space:nowrap}
+.step-label.done{color:var(--green)}
+.step-label.current{color:var(--accent)}
+.step-connector{width:48px;height:2px;background:var(--border);flex-shrink:0}
+.step-connector.done{background:var(--green)}
+
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:20px}
+.tab{padding:8px 16px;font-size:13px;color:var(--text2);cursor:pointer;transition:var(--trans);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:500}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+.notification-item{display:flex;gap:12px;padding:14px 0;border-bottom:1px solid var(--border)}
+.notification-item:last-child{border-bottom:none}
+.notif-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.notif-content{flex:1}
+.notif-title{font-size:13px;font-weight:500}
+.notif-sub{font-size:12px;color:var(--text2);margin-top:2px}
+.notif-time{font-size:11px;color:var(--text3);margin-top:4px;font-family:var(--mono)}
+.notif-unread{position:relative}
+.notif-unread::before{content:'';position:absolute;left:-12px;top:50%;transform:translateY(-50%);width:5px;height:5px;background:var(--accent);border-radius:50%}
+
+.chart-container{position:relative;height:200px}
+.chart-container.tall{height:260px}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-overlay.open{display:flex}
+.modal{background:var(--card);border:1px solid var(--border-md);border-radius:var(--radius-lg);padding:28px;width:480px;max-width:90vw;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.4);animation:modalIn 0.2s ease}
+@keyframes modalIn{from{opacity:0;transform:scale(0.95)}to{opacity:1;transform:scale(1)}}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.modal-title{font-size:16px;font-weight:600}
+.modal-close{color:var(--text3);cursor:pointer;font-size:16px;transition:var(--trans)}
+.modal-close:hover{color:var(--text)}
+
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border)}
+.settings-row:last-child{border-bottom:none}
+.settings-info{flex:1}
+.settings-label{font-size:13px;font-weight:500}
+.settings-sub{font-size:12px;color:var(--text2);margin-top:2px}
+.toggle{position:relative;width:40px;height:22px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;inset:0;background:var(--bg4);border-radius:20px;cursor:pointer;transition:var(--trans)}
+.toggle-slider::before{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:var(--trans)}
+.toggle input:checked+.toggle-slider{background:var(--accent)}
+.toggle input:checked+.toggle-slider::before{transform:translateX(18px)}
+
+.empty-state{text-align:center;padding:48px 24px;color:var(--text2)}
+.empty-state i{font-size:40px;color:var(--text3);margin-bottom:14px;display:block}
+.empty-state h3{font-size:15px;font-weight:500;color:var(--text);margin-bottom:6px}
+.empty-state p{font-size:13px;line-height:1.6}
+
+.chat-bubble{display:flex;gap:10px;margin-bottom:16px}
+.chat-bubble.ai .bubble-body{background:var(--bg3);border-radius:0 12px 12px 12px}
+.chat-bubble.user{flex-direction:row-reverse}
+.chat-bubble.user .bubble-body{background:var(--accent-soft);border:1px solid rgba(79,142,247,0.2);border-radius:12px 0 12px 12px}
+.bubble-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;flex-shrink:0;background:linear-gradient(135deg,var(--accent),var(--purple))}
+.bubble-avatar.user-av{background:linear-gradient(135deg,var(--green),var(--accent))}
+.bubble-body{padding:10px 14px;font-size:13px;color:var(--text);line-height:1.6;max-width:80%}
+.bubble-time{font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:4px;text-align:right}
+
+.kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border-md);border-radius:4px;padding:1px 6px;font-size:11px;font-family:var(--mono);color:var(--text2)}
+
+.log-line{font-family:var(--mono);font-size:12px;padding:4px 0;border-bottom:1px solid var(--border);display:flex;gap:12px}
+.log-line:last-child{border-bottom:none}
+.log-time{color:var(--text3);flex-shrink:0}
+.log-level{flex-shrink:0;font-weight:500}
+.log-level.info{color:var(--accent)}
+.log-level.warn{color:var(--amber)}
+.log-level.error{color:var(--red)}
+.log-level.success{color:var(--green)}
+.log-msg{color:var(--text2)}
+
+.plan-card{border:1px solid var(--border);border-radius:var(--radius);padding:20px;transition:var(--trans);cursor:pointer}
+.plan-card:hover{border-color:var(--border-md);transform:translateY(-2px)}
+.plan-card.featured{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),0 8px 32px var(--accent-glow)}
+.plan-price{font-size:32px;font-weight:600;letter-spacing:-1px;line-height:1}
+.plan-price sup{font-size:16px;font-weight:500;vertical-align:top;margin-top:6px}
+.plan-period{font-size:12px;color:var(--text2);margin-left:4px}
+.plan-feature{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2);padding:5px 0}
+.plan-feature i{color:var(--green);font-size:12px;flex-shrink:0}
+</style>
+</head>
+<body>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon"><i class="fa-solid fa-scale-balanced"></i></div>
+    <div class="logo-text">IA<span>Referee</span></div>
+  </div>
+
+  <div class="sidebar-section">Main</div>
+  <div class="nav-item active" onclick="navigate('dashboard',this)"><i class="fa-solid fa-gauge-high"></i>Dashboard</div>
+  <div class="nav-item" onclick="navigate('sessions',this)"><i class="fa-solid fa-handshake"></i>Sessions<span class="nav-badge" id="badge-sessions">3</span></div>
+  <div class="nav-item" onclick="navigate('new-session',this)"><i class="fa-solid fa-plus"></i>New Session</div>
+
+  <div class="sidebar-section">Dispute Tools</div>
+  <div class="nav-item" onclick="navigate('documents',this)"><i class="fa-solid fa-folder-open"></i>Documents</div>
+  <div class="nav-item" onclick="navigate('disputes',this)"><i class="fa-solid fa-gavel"></i>Disputes<span class="nav-badge" id="badge-disputes">1</span></div>
+  <div class="nav-item" onclick="navigate('rulings',this)"><i class="fa-solid fa-scroll"></i>Rulings</div>
+  <div class="nav-item" onclick="navigate('ai-chat',this)"><i class="fa-solid fa-robot"></i>AI Assistant</div>
+
+  <div class="sidebar-section">Manage</div>
+  <div class="nav-item" onclick="navigate('parties',this)"><i class="fa-solid fa-users"></i>Parties</div>
+  <div class="nav-item" onclick="navigate('activity',this)"><i class="fa-solid fa-wave-square"></i>Activity Log</div>
+  <div class="nav-item" onclick="navigate('billing',this)"><i class="fa-solid fa-credit-card"></i>Billing</div>
+
+  <div class="sidebar-section">Account</div>
+  <div class="nav-item" onclick="navigate('notifications',this)"><i class="fa-solid fa-bell"></i>Notifications<span class="nav-badge" id="badge-notif">5</span></div>
+  <div class="nav-item" onclick="navigate('settings',this)"><i class="fa-solid fa-sliders"></i>Settings</div>
+
+  <div class="sidebar-bottom">
+    <div class="user-card" onclick="navigate('settings',document.querySelector('[onclick*=settings]'))">
+      <div class="user-avatar">JD</div>
+      <div class="user-info">
+        <div class="user-name">John Doe</div>
+        <div class="user-role">Admin</div>
+      </div>
+      <div class="user-menu-btn"><i class="fa-solid fa-ellipsis"></i></div>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div class="topbar-breadcrumb" id="topbar-bc">Dashboard</div>
+    <div class="search-box">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="text" placeholder="Search sessions, disputes..." id="global-search">
+    </div>
+    <div class="topbar-actions">
+      <div class="icon-btn notif-dot" onclick="navigate('notifications',document.querySelectorAll('.nav-item')[12])"><i class="fa-solid fa-bell"></i></div>
+      <div class="icon-btn" onclick="toggleTheme()" id="theme-btn" title="Toggle theme"><i class="fa-solid fa-moon"></i></div>
+      <div class="icon-btn" onclick="openModal('new-session-modal')"><i class="fa-solid fa-plus"></i></div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD PAGE -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <h1>Dashboard</h1>
+        <p>Overview of all sessions, disputes, and rulings</p>
+      </div>
+
+      <div class="grid-4" style="margin-bottom:20px">
+        <div class="card card-sm">
+          <div class="card-header"><div class="card-title">Active Sessions</div><div class="stat-icon blue"><i class="fa-solid fa-handshake"></i></div></div>
+          <div class="card-value">12</div>
+          <div class="card-delta delta-up"><i class="fa-solid fa-arrow-trend-up"></i>3 this week</div>
+        </div>
+        <div class="card card-sm">
+          <div class="card-header"><div class="card-title">Open Disputes</div><div class="stat-icon amber"><i class="fa-solid fa-gavel"></i></div></div>
+          <div class="card-value">4</div>
+          <div class="card-delta delta-down"><i class="fa-solid fa-arrow-trend-down"></i>2 pending AI</div>
+        </div>
+        <div class="card card-sm">
+          <div class="card-header"><div class="card-title">Rulings Issued</div><div class="stat-icon green"><i class="fa-solid fa-scroll"></i></div></div>
+          <div class="card-value">38</div>
+          <div class="card-delta delta-up"><i class="fa-solid fa-arrow-trend-up"></i>91% accepted</div>
+        </div>
+        <div class="card card-sm">
+          <div class="card-header"><div class="card-title">Documents Approved</div><div class="stat-icon purple"><i class="fa-solid fa-file-circle-check"></i></div></div>
+          <div class="card-value">87</div>
+          <div class="card-delta delta-up"><i class="fa-solid fa-arrow-trend-up"></i>All verified</div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-bottom:20px">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Session Activity (7 days)</div><div class="badge badge-blue">Live</div></div>
+          <div class="chart-container"><canvas id="chart-activity"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Ruling Outcomes</div></div>
+          <div class="chart-container"><canvas id="chart-outcomes"></canvas></div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Recent Sessions</div><button class="btn btn-sm btn-secondary" onclick="navigate('sessions',document.querySelectorAll('.nav-item')[1])">View all</button></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Session</th><th>Parties</th><th>Status</th><th>Date</th></tr></thead>
+              <tbody id="recent-sessions-table"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Recent Activity</div></div>
+          <div class="timeline" id="dashboard-timeline"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SESSIONS PAGE -->
+    <div class="page" id="page-sessions">
+      <div class="page-header">
+        <h1>Sessions</h1>
+        <p>Manage all dispute resolution sessions</p>
+      </div>
+      <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+        <div class="search-box" style="width:260px"><i class="fa-solid fa-magnifying-glass"></i><input type="text" placeholder="Search sessions..." id="session-search" oninput="filterSessions()"></div>
+        <select class="input" style="width:160px" id="session-filter" onchange="filterSessions()">
+          <option value="">All statuses</option>
+          <option value="active">Active</option>
+          <option value="pending">Pending</option>
+          <option value="resolved">Resolved</option>
+          <option value="closed">Closed</option>
+        </select>
+        <button class="btn btn-primary" onclick="openModal('new-session-modal')"><i class="fa-solid fa-plus"></i>New Session</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>Title</th><th>Party A</th><th>Party B</th><th>Disputes</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
+            <tbody id="sessions-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- NEW SESSION PAGE -->
+    <div class="page" id="page-new-session">
+      <div class="page-header">
+        <h1>New Session</h1>
+        <p>Create a new dispute resolution session between two parties</p>
+      </div>
+
+      <div class="step-flow" id="new-session-steps">
+        <div class="step-item">
+          <div class="step-node"><div class="step-circle current" id="step-c-1">1</div><div class="step-label current">Setup</div></div>
+        </div>
+        <div class="step-connector" id="step-con-1"></div>
+        <div class="step-item">
+          <div class="step-node"><div class="step-circle" id="step-c-2">2</div><div class="step-label" id="step-l-2">Parties</div></div>
+        </div>
+        <div class="step-connector" id="step-con-2"></div>
+        <div class="step-item">
+          <div class="step-node"><div class="step-circle" id="step-c-3">3</div><div class="step-label" id="step-l-3">Documents</div></div>
+        </div>
+        <div class="step-connector" id="step-con-3"></div>
+        <div class="step-item">
+          <div class="step-node"><div class="step-circle" id="step-c-4">4</div><div class="step-label" id="step-l-4">Agreement</div></div>
+        </div>
+        <div class="step-connector" id="step-con-4"></div>
+        <div class="step-item">
+          <div class="step-node"><div class="step-circle" id="step-c-5">5</div><div class="step-label" id="step-l-5">Launch</div></div>
+        </div>
+      </div>
+
+      <div class="card" id="new-step-1">
+        <div class="card-header"><div style="font-size:15px;font-weight:600">Session Details</div></div>
+        <div class="form-group"><label>Session Title</label><input class="input" type="text" placeholder="e.g. Software Development Scope Dispute" id="ns-title"></div>
+        <div class="grid-2">
+          <div class="form-group"><label>Session Type</label><select class="input" id="ns-type"><option>Scope Dispute</option><option>Contract Breach</option><option>Deliverable Review</option><option>Payment Dispute</option><option>Other</option></select></div>
+          <div class="form-group"><label>Language</label><select class="input"><option>English</option><option>Spanish</option><option>Bilingual</option></select></div>
+        </div>
+        <div class="form-group"><label>Description (optional)</label><textarea class="input" placeholder="Brief description of the dispute context..."></textarea></div>
+        <div style="display:flex;justify-content:flex-end"><button class="btn btn-primary" onclick="nsNext(1)">Next <i class="fa-solid fa-arrow-right"></i></button></div>
+      </div>
+
+      <div class="card" id="new-step-2" style="display:none">
+        <div class="card-header"><div style="font-size:15px;font-weight:600">Define Parties</div></div>
+        <div class="grid-2">
+          <div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px"><div class="party-dot" style="background:var(--accent)"></div><strong style="font-size:14px">Party A (Client)</strong></div>
+            <div class="form-group"><label>Name / Organization</label><input class="input" type="text" placeholder="e.g. Acme Corp" id="ns-party-a"></div>
+            <div class="form-group"><label>Contact Email</label><input class="input" type="email" placeholder="client@example.com"></div>
+            <div class="form-group"><label>Role</label><select class="input"><option>Client</option><option>Product Owner</option><option>Buyer</option></select></div>
+          </div>
+          <div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px"><div class="party-dot" style="background:var(--purple)"></div><strong style="font-size:14px">Party B (Provider)</strong></div>
+            <div class="form-group"><label>Name / Organization</label><input class="input" type="text" placeholder="e.g. Dev Studio Ltd" id="ns-party-b"></div>
+            <div class="form-group"><label>Contact Email</label><input class="input" type="email" placeholder="provider@example.com"></div>
+            <div class="form-group"><label>Role</label><select class="input"><option>Provider</option><option>Contractor</option><option>Seller</option></select></div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between"><button class="btn btn-secondary" onclick="nsPrev(2)"><i class="fa-solid fa-arrow-left"></i> Back</button><button class="btn btn-primary" onclick="nsNext(2)">Next <i class="fa-solid fa-arrow-right"></i></button></div>
+      </div>
+
+      <div class="card" id="new-step-3" style="display:none">
+        <div class="card-header"><div style="font-size:15px;font-weight:600">Upload Documents</div></div>
+        <div class="doc-upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDrop(event)">
+          <div class="doc-upload-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+          <div class="doc-upload-text">Click to upload or drag & drop</div>
+          <div class="doc-upload-sub">PDF, DOCX, TXT — max 25MB each</div>
+          <input type="file" id="file-input" style="display:none" multiple accept=".pdf,.docx,.txt" onchange="handleFileInput(event)">
+        </div>
+        <div style="margin-top:14px" id="uploaded-docs-list"></div>
+        <div style="display:flex;justify-content:space-between;margin-top:14px"><button class="btn btn-secondary" onclick="nsPrev(3)"><i class="fa-solid fa-arrow-left"></i> Back</button><button class="btn btn-primary" onclick="nsNext(3)">Next <i class="fa-solid fa-arrow-right"></i></button></div>
+      </div>
+
+      <div class="card" id="new-step-4" style="display:none">
+        <div class="card-header"><div style="font-size:15px;font-weight:600">IAReferee Agreement</div></div>
+        <div style="background:var(--bg3);border-radius:var(--radius-sm);padding:16px;font-size:13px;color:var(--text2);line-height:1.7;max-height:200px;overflow-y:auto;margin-bottom:16px">
+          <strong style="color:var(--text)">Terms of Use for IAReferee</strong><br><br>
+          Both parties agree to use IAReferee as a neutral AI-assisted dispute resolution tool. Both parties acknowledge that: (1) All uploaded documents have been mutually approved; (2) Disputes must be accepted by both parties before AI analysis begins; (3) AI rulings are advisory and non-binding unless both parties agree otherwise; (4) The session will be conducted transparently, typically via shared screen; (5) Both parties may reject a dispute submission before it is processed.
+        </div>
+        <div class="approval-row">
+          <div class="approval-party"><div class="check-circle" id="agree-a"><i class="fa-solid fa-check" style="display:none"></i></div>Party A agrees</div>
+          <button class="btn btn-sm btn-primary" onclick="toggleAgree('a')">Sign Agreement</button>
+        </div>
+        <div class="approval-row">
+          <div class="approval-party"><div class="check-circle" id="agree-b"><i class="fa-solid fa-check" style="display:none"></i></div>Party B agrees</div>
+          <button class="btn btn-sm btn-primary" onclick="toggleAgree('b')">Sign Agreement</button>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:16px"><button class="btn btn-secondary" onclick="nsPrev(4)"><i class="fa-solid fa-arrow-left"></i> Back</button><button class="btn btn-primary" id="ns-launch-btn" onclick="nsNext(4)" disabled>Next <i class="fa-solid fa-arrow-right"></i></button></div>
+      </div>
+
+      <div class="card" id="new-step-5" style="display:none;text-align:center;padding:40px">
+        <div style="width:64px;height:64px;background:var(--green-soft);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--green);margin:0 auto 16px"><i class="fa-solid fa-circle-check"></i></div>
+        <h2 style="font-size:20px;font-weight:600;margin-bottom:8px">Session Created!</h2>
+        <p style="color:var(--text2);margin-bottom:20px">Share this session code with both parties</p>
+        <div class="session-code" id="created-session-code">IAR-2024-0042</div>
+        <div style="display:flex;gap:10px;justify-content:center;margin-top:20px">
+          <button class="btn btn-secondary" onclick="copySessionCode()"><i class="fa-solid fa-copy"></i>Copy Code</button>
+          <button class="btn btn-primary" onclick="navigate('sessions',document.querySelectorAll('.nav-item')[1])"><i class="fa-solid fa-arrow-right"></i>View Sessions</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DOCUMENTS PAGE -->
+    <div class="page" id="page-documents">
+      <div class="page-header">
+        <h1>Documents</h1>
+        <p>All uploaded and approved documents across sessions</p>
+      </div>
+      <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+        <div class="search-box" style="width:260px"><i class="fa-solid fa-magnifying-glass"></i><input type="text" placeholder="Search documents..." id="doc-search" oninput="filterDocs()"></div>
+        <select class="input" style="width:160px" onchange="filterDocs()" id="doc-filter">
+          <option value="">All statuses</option>
+          <option value="approved">Approved</option>
+          <option value="pending">Pending</option>
+          <option value="rejected">Rejected</option>
+        </select>
+        <button class="btn btn-primary" onclick="openModal('upload-doc-modal')"><i class="fa-solid fa-upload"></i>Upload Document</button>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab(this,'docs-all')">All Documents</div>
+        <div class="tab" onclick="switchTab(this,'docs-pending')">Pending Approval</div>
+        <div class="tab" onclick="switchTab(this,'docs-approved')">Approved</div>
+      </div>
+      <div class="tab-panel active" id="docs-all">
+        <div id="docs-list"></div>
+      </div>
+      <div class="tab-panel" id="docs-pending">
+        <div id="docs-pending-list"></div>
+      </div>
+      <div class="tab-panel" id="docs-approved">
+        <div id="docs-approved-list"></div>
+      </div>
+    </div>
+
+    <!-- DISPUTES PAGE -->
+    <div class="page" id="page-disputes">
+      <div class="page-header">
+        <h1>Disputes</h1>
+        <p>Submit and manage disputes for AI resolution</p>
+      </div>
+      <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+        <div class="search-box" style="width:260px"><i class="fa-solid fa-magnifying-glass"></i><input type="text" placeholder="Search disputes..."></div>
+        <select class="input" style="width:160px" id="dispute-session-filter"><option value="">All sessions</option></select>
+        <button class="btn btn-primary" onclick="openModal('new-dispute-modal')"><i class="fa-solid fa-plus"></i>Submit Dispute</button>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab(this,'disputes-open')">Open</div>
+        <div class="tab" onclick="switchTab(this,'disputes-pending')">Pending Acceptance</div>
+        <div class="tab" onclick="switchTab(this,'disputes-resolved')">Resolved</div>
+      </div>
+      <div class="tab-panel active" id="disputes-open">
+        <div id="open-disputes-list"></div>
+      </div>
+      <div class="tab-panel" id="disputes-pending">
+        <div id="pending-disputes-list"></div>
+      </div>
+      <div class="tab-panel" id="disputes-resolved">
+        <div id="resolved-disputes-list"></div>
+      </div>
+    </div>
+
+    <!-- RULINGS PAGE -->
+    <div class="page" id="page-rulings">
+      <div class="page-header">
+        <h1>AI Rulings</h1>
+        <p>All AI-generated rulings and their outcomes</p>
+      </div>
+      <div style="margin-bottom:20px">
+        <div class="grid-3" style="margin-bottom:16px">
+          <div class="card card-sm"><div class="card-header"><div class="card-title">Total Rulings</div><div class="stat-icon blue"><i class="fa-solid fa-scroll"></i></div></div><div class="card-value">38</div></div>
+          <div class="card card-sm"><div class="card-header"><div class="card-title">Accepted</div><div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div></div><div class="card-value">35</div></div>
+          <div class="card card-sm"><div class="card-header"><div class="card-title">Appealed</div><div class="stat-icon red"><i class="fa-solid fa-triangle-exclamation"></i></div></div><div class="card-value">3</div></div>
+        </div>
+        <div id="rulings-list"></div>
+      </div>
+    </div>
+
+    <!-- AI CHAT PAGE -->
+    <div class="page" id="page-ai-chat">
+      <div class="page-header">
+        <h1>AI Assistant</h1>
+        <p>Ask the AI referee questions about your documents and disputes</p>
+      </div>
+      <div style="display:flex;gap:16px;height:calc(100vh - 200px);min-height:500px">
+        <div class="card" style="flex:1;display:flex;flex-direction:column;min-height:0">
+          <div style="flex:1;overflow-y:auto;padding:4px 0" id="chat-messages">
+            <div class="chat-bubble ai">
+              <div class="bubble-avatar"><i class="fa-solid fa-robot"></i></div>
+              <div>
+                <div class="bubble-body">Hello! I'm the IAReferee AI assistant. I can help you analyze documents, clarify dispute terms, or answer questions about your active sessions. How can I help?</div>
+                <div class="bubble-time">Now</div>
+              </div>
+            </div>
+          </div>
+          <div class="divider" style="margin:12px 0"></div>
+          <div style="display:flex;gap:8px">
+            <input class="input" type="text" placeholder="Type your question..." id="chat-input" onkeydown="if(event.key==='Enter')sendChat()" style="flex:1">
+            <button class="btn btn-primary" onclick="sendChat()"><i class="fa-solid fa-paper-plane"></i></button>
+          </div>
+        </div>
+        <div style="width:220px;display:flex;flex-direction:column;gap:12px">
+          <div class="card card-sm">
+            <div class="card-title" style="margin-bottom:10px">Quick Prompts</div>
+            <div style="display:flex;flex-direction:column;gap:6px" id="quick-prompts"></div>
+          </div>
+          <div class="card card-sm">
+            <div class="card-title" style="margin-bottom:10px">Session Context</div>
+            <div style="font-size:12px;color:var(--text2)">Active session: <strong style="color:var(--text)">IAR-2024-0039</strong></div>
+            <div style="font-size:12px;color:var(--text2);margin-top:6px">Documents loaded: <strong style="color:var(--text)">4</strong></div>
+            <div style="font-size:12px;color:var(--text2);margin-top:6px">Open disputes: <strong style="color:var(--amber)">2</strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PARTIES PAGE -->
+    <div class="page" id="page-parties">
+      <div class="page-header">
+        <h1>Parties</h1>
+        <p>Manage clients and providers involved in sessions</p>
+      </div>
+      <div style="display:flex;gap:12px;margin-bottom:20px">
+        <div class="search-box" style="width:260px"><i class="fa-solid fa-magnifying-glass"></i><input type="text" placeholder="Search parties..."></div>
+        <button class="btn btn-primary" onclick="openModal('add-party-modal')"><i class="fa-solid fa-user-plus"></i>Add Party</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Party</th><th>Role</th><th>Sessions</th><th>Disputes</th><th>Win Rate</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="parties-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACTIVITY LOG PAGE -->
+    <div class="page" id="page-activity">
+      <div class="page-header">
+        <h1>Activity Log</h1>
+        <p>Full audit trail of all session events</p>
+      </div>
+      <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+        <div class="search-box" style="width:260px"><i class="fa-solid fa-magnifying-glass"></i><input type="text" placeholder="Search logs..."></div>
+        <select class="input" style="width:140px" onchange="filterLogs()" id="log-level-filter">
+          <option value="">All levels</option>
+          <option value="info">Info</option>
+          <option value="success">Success</option>
+          <option value="warn">Warning</option>
+          <option value="error">Error</option>
+        </select>
+        <button class="btn btn-secondary"><i class="fa-solid fa-download"></i>Export CSV</button>
+      </div>
+      <div class="card">
+        <div id="activity-log"></div>
+      </div>
+    </div>
+
+    <!-- BILLING PAGE -->
+    <div class="page" id="page-billing">
+      <div class="page-header">
+        <h1>Billing</h1>
+        <p>Manage your subscription and session credits</p>
+      </div>
+      <div class="grid-3" style="margin-bottom:24px">
+        <div class="card card-sm"><div class="card-header"><div class="card-title">Current Plan</div><span class="badge badge-blue">Active</span></div><div class="card-value" style="font-size:20px">Starter</div><div style="font-size:12px;color:var(--text2);margin-top:4px">€15/month</div></div>
+        <div class="card card-sm"><div class="card-header"><div class="card-title">Sessions Used</div><div class="stat-icon amber"><i class="fa-solid fa-handshake"></i></div></div><div class="card-value">12 <span style="font-size:16px;color:var(--text2)">/ 20</span></div><div class="progress-bar" style="margin-top:8px"><div class="progress-fill" style="width:60%"></div></div></div>
+        <div class="card card-sm"><div class="card-header"><div class="card-title">Next Billing</div><div class="stat-icon green"><i class="fa-solid fa-calendar"></i></div></div><div class="card-value" style="font-size:20px">Jan 23</div><div style="font-size:12px;color:var(--text2);margin-top:4px">€15.00 due</div></div>
+      </div>
+
+      <div class="grid-3" style="margin-bottom:24px">
+        <div class="plan-card" onclick="selectPlan(this,'starter')">
+          <div class="card-title" style="margin-bottom:12px">Starter</div>
+          <div class="plan-price"><sup>€</sup>15<span class="plan-period">/mo</span></div>
+          <div class="divider"></div>
+          <div class="plan-feature"><i class="fa-solid fa-check"></i>20 sessions/month</div>
+          <div class="plan-feature"><i class="fa-solid fa-check"></i>5 documents/session</div>
+          <div class="plan-feature"><i class="fa-solid fa-check"></i>AI rulings</div>
+          <div class="plan-feature"><i class="fa-solid fa-check"></i>Email support</div>
+          <button class="btn btn-secondary" style="width:100%;margin-top:14px;justify-content:center">Current Plan</button>
+        </div>
+        <div class="plan-card featured" onclick="selectPlan(this,'pro')">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div class="card-title">Professional</div><span class="badge badge-blue">Popular</span></div>
+          <div class="plan-price"><sup>€</sup>49<span class="plan-period">/mo</span></div>
+          <div class="divider"></div>
+          <div class="plan-feature"><i class="fa-solid fa-check"></i>Unlimited sessions</div>
+          <div class="plan-feature"><i class="fa-solid fa-check"></i>Unlimited documents</div>
+          <div class="plan-feature"><i class="fa-solid fa-check"></i>Priority AI rulings</div>
+          <div class="plan-feature"><i class="fa-solid fa-check"></i>PDF export</div>
+          <div class="plan-feature"><i class="fa-solid fa-check"></i>Priority support</div>
+          <button class="btn btn-primary" style="width:100%;margin-top:14px;justify-content:center">Upgrade</button>
+        </div>
+        <div class="plan-card" onclick="selectPlan(this,'enterprise')">
+          <div class="card-title" style="margin-bottom:12px">Enterprise</div>
+          <div class="plan-price"><sup>€</sup>149<span class="plan-period">/mo</span></div>
+          <div class="divider"></div>
+          <div class="plan-feature"><i class="fa-solid fa-check"></i>Everything in Pro</div>
+          <div class="plan-feature"><i class="fa-solid fa-check"></i>Custom AI instructions</div>
+          <div class="plan-feature"><i class="fa-solid fa-check"></i>White-label</div>
+          <div class="plan-feature"><i class="fa-solid fa-check"></i>API access</div>
+          <div class="plan-feature"><i class="fa-solid fa-check"></i>SLA + dedicated support</div>
+          <button class="btn btn-secondary" style="width:100%;margin-top:14px;justify-content:center">Contact Sales</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">Invoice History</div><button class="btn btn-sm btn-secondary"><i class="fa-solid fa-download"></i>Download All</button></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Invoice</th><th>Date</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="invoice-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTIFICATIONS PAGE -->
+    <div class="page" id="page-notifications">
+      <div class="page-header">
+        <h1>Notifications</h1>
+        <p>Stay updated on session activity</p>
+      </div>
+      <div style="display:flex;gap:10px;margin-bottom:20px">
+        <button class="btn btn-primary btn-sm" onclick="markAllRead()"><i class="fa-solid fa-check-double"></i>Mark all read</button>
+        <button class="btn btn-secondary btn-sm"><i class="fa-solid fa-trash"></i>Clear all</button>
+      </div>
+      <div class="card"><div id="notifications-list"></div></div>
+    </div>
+
+    <!-- SETTINGS PAGE -->
+    <div class="page" id="page-settings">
+      <div class="page-header">
+        <h1>Settings</h1>
+        <p>Configure your account and application preferences</p>
+      </div>
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab(this,'settings-general')">General</div>
+        <div class="tab" onclick="switchTab(this,'settings-ai')">AI Config</div>
+        <div class="tab" onclick="switchTab(this,'settings-security')">Security</div>
+        <div class="tab" onclick="switchTab(this,'settings-integrations')">Integrations</div>
+      </div>
+
+      <div class="tab-panel active" id="settings-general">
+        <div class="card" style="margin-bottom:16px">
+          <div style="font-size:14px;font-weight:600;margin-bottom:16px">Profile</div>
+          <div class="grid-2">
+            <div class="form-group"><label>Full Name</label><input class="input" type="text" value="John Doe"></div>
+            <div class="form-group"><label>Email</label><input class="input" type="email" value="john@example.com"></div>
+            <div class="form-group"><label>Organization</label><input class="input" type="text" value="Acme Corp"></div>
+            <div class="form-group"><label>Timezone</label><select class="input"><option>Europe/Madrid (UTC+1)</option><option>UTC</option><option>America/New_York</option></select></div>
+          </div>
+          <button class="btn btn-primary">Save Changes</button>
+        </div>
+        <div class="card">
+          <div style="font-size:14px;font-weight:600;margin-bottom:16px">Preferences</div>
+          <div class="settings-row">
+            <div class="settings-info"><div class="settings-label">Dark Mode</div><div class="settings-sub">Toggle dark/light theme</div></div>
+            <label class="toggle"><input type="checkbox" id="dark-mode-toggle" onchange="toggleTheme()" checked><span class="toggle-slider"></span></label>
+          </div>
+          <div class="settings-row">
+            <div class="settings-info"><div class="settings-label">Email Notifications</div><div class="settings-sub">Receive emails for session updates</div></div>
+            <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+          </div>
+          <div class="settings-row">
+            <div class="settings-info"><div class="settings-label">Auto-approve Documents</div><div class="settings-sub">Skip manual approval for trusted parties</div></div>
+            <label class="toggle"><input type="checkbox"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="settings-row">
+            <div class="settings-info"><div class="settings-label">Screen Share Mode</div><div class="settings-sub">Optimize UI for shared screen sessions</div></div>
+            <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="settings-ai">
+        <div class="card">
+          <div style="font-size:14px;font-weight:600;margin-bottom:16px">AI Configuration</div>
+          <div class="form-group"><label>AI Model</label><select class="input"><option>Claude 3.5 Sonnet (Recommended)</option><option>Claude 3 Opus</option><option>Claude 3 Haiku</option></select></div>
+          <div class="form-group"><label>System Prompt (Custom Instructions)</label><textarea class="input" style="min-height:140px">You are IAReferee, a neutral AI dispute resolution assistant. Always analyze documents objectively, provide a clear ruling, detailed explanation, and specific document references. Be concise and professional.</textarea></div>
+          <div class="form-group"><label>Response Language</label><select class="input"><option>Auto-detect</option><option>English</option><option>Spanish</option><option>Bilingual</option></select></div>
+          <div class="settings-row">
+            <div class="settings-info"><div class="settings-label">Cite Document Sources</div><div class="settings-sub">Include exact references in every ruling</div></div>
+            <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+          </div>
+          <div class="settings-row">
+            <div class="settings-info"><div class="settings-label">Confidence Score</div><div class="settings-sub">Show AI confidence level with each ruling</div></div>
+            <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+          </div>
+          <div style="margin-top:16px"><button class="btn btn-primary">Save AI Settings</button></div>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="settings-security">
+        <div class="card">
+          <div style="font-size:14px;font-weight:600;margin-bottom:16px">Security</div>
+          <div class="form-group"><label>Current Password</label><input class="input" type="password" placeholder="••••••••"></div>
+          <div class="grid-2">
+            <div class="form-group"><label>New Password</label><input class="input" type="password" placeholder="••••••••"></div>
+            <div class="form-group"><label>Confirm Password</label><input class="input" type="password" placeholder="••••••••"></div>
+          </div>
+          <button class="btn btn-primary" style="margin-bottom:16px">Update Password</button>
+          <div class="divider"></div>
+          <div class="settings-row">
+            <div class="settings-info"><div class="settings-label">Two-Factor Authentication</div><div class="settings-sub">Secure your account with 2FA</div></div>
+            <label class="toggle"><input type="checkbox"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="settings-row">
+            <div class="settings-info"><div class="settings-label">Session Expiry</div><div class="settings-sub">Auto-logout after inactivity</div></div>
+            <select class="input" style="width:140px"><option>4 hours</option><option>8 hours</option><option>24 hours</option><option>Never</option></select>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="settings-integrations">
+        <div class="card">
+          <div style="font-size:14px;font-weight:600;margin-bottom:16px">Integrations</div>
+          <div class="settings-row">
+            <div class="settings-info"><div class="settings-label"><i class="fa-brands fa-slack" style="margin-right:6px"></i>Slack Notifications</div><div class="settings-sub">Send alerts to Slack channels</div></div>
+            <button class="btn btn-secondary btn-sm">Connect</button>
+          </div>
+          <div class="settings-row">
+            <div class="settings-info"><div class="settings-label"><i class="fa-brands fa-google" style="margin-right:6px"></i>Google Drive</div><div class="settings-sub">Import documents from Drive</div></div>
+            <button class="btn btn-secondary btn-sm">Connect</button>
+          </div>
+          <div class="settings-row">
+            <div class="settings-info"><div class="settings-label"><i class="fa-solid fa-webhook" style="margin-right:6px"></i>Webhook URL</div><div class="settings-sub">Post events to external service</div></div>
+            <div style="display:flex;gap:8px"><input class="input" type="url" placeholder="https://..." style="width:220px"><button class="btn btn-primary btn-sm">Save</button></div>
+          </div>
+          <div class="settings-row">
+            <div class="settings-info"><div class="settings-label"><i class="fa-solid fa-key" style="margin-right:6px"></i>API Key</div><div class="settings-sub">For direct API access</div></div>
+            <div style="display:flex;gap:8px"><input class="input" type="text" value="sk-iareferee-••••••••••••" style="width:220px;font-family:var(--mono);font-size:12px" readonly><button class="btn btn-secondary btn-sm" onclick="copyApiKey()"><i class="fa-solid fa-copy"></i></button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="new-session-modal" onclick="if(event.target===this)closeModal('new-session-modal')">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Quick New Session</div><div class="modal-close" onclick="closeModal('new-session-modal')"><i class="fa-solid fa-xmark"></i></div></div>
+    <div class="form-group"><label>Session Title</label><input class="input" type="text" placeholder="e.g. API Integration Dispute"></div>
+    <div class="grid-2">
+      <div class="form-group"><label>Party A</label><input class="input" type="text" placeholder="Client name"></div>
+      <div class="form-group"><label>Party B</label><input class="input" type="text" placeholder="Provider name"></div>
+    </div>
+    <div class="form-group"><label>Type</label><select class="input"><option>Scope Dispute</option><option>Contract Breach</option><option>Deliverable Review</option><option>Payment Dispute</option></select></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
+      <button class="btn btn-secondary" onclick="closeModal('new-session-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="quickCreateSession()"><i class="fa-solid fa-plus"></i>Create Session</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="new-dispute-modal" onclick="if(event.target===this)closeModal('new-dispute-modal')">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Submit Dispute</div><div class="modal-close" onclick="closeModal('new-dispute-modal')"><i class="fa-solid fa-xmark"></i></div></div>
+    <div class="form-group"><label>Session</label><select class="input" id="dispute-session-select"></select></div>
+    <div class="form-group"><label>Dispute Title</label><input class="input" type="text" placeholder="e.g. Payment for Phase 2 deliverables"></div>
+    <div class="form-group"><label>Submitted by</label><select class="input"><option>Party A (Client)</option><option>Party B (Provider)</option></select></div>
+    <div class="form-group"><label>Dispute Statement</label><textarea class="input" placeholder="Describe the dispute clearly. Reference specific document sections if applicable..."></textarea></div>
+    <div class="form-group"><label>Referenced Documents</label><select class="input" multiple style="height:80px"><option>Contract v1.2.pdf</option><option>Scope of Work.docx</option><option>Email Thread.txt</option></select></div>
+    <div style="background:var(--amber-soft);border:1px solid rgba(251,191,36,0.3);border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;color:var(--amber);margin-bottom:14px">
+      <i class="fa-solid fa-triangle-exclamation" style="margin-right:6px"></i>Both parties must accept this dispute before AI analysis begins
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeModal('new-dispute-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitDispute()"><i class="fa-solid fa-gavel"></i>Submit for Acceptance</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="ruling-modal" onclick="if(event.target===this)closeModal('ruling-modal')">
+  <div class="modal" style="width:580px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="ruling-modal-title">AI Ruling</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:2px" id="ruling-modal-session"></div>
+      </div>
+      <div class="modal-close" onclick="closeModal('ruling-modal')"><i class="fa-solid fa-xmark"></i></div>
+    </div>
+    <div id="ruling-modal-content"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
+      <button class="btn btn-danger btn-sm"><i class="fa-solid fa-flag"></i>Appeal</button>
+      <button class="btn btn-secondary btn-sm"><i class="fa-solid fa-download"></i>Export PDF</button>
+      <button class="btn btn-primary btn-sm" onclick="closeModal('ruling-modal')"><i class="fa-solid fa-check"></i>Accept Ruling</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="upload-doc-modal" onclick="if(event.target===this)closeModal('upload-doc-modal')">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Upload Document</div><div class="modal-close" onclick="closeModal('upload-doc-modal')"><i class="fa-solid fa-xmark"></i></div></div>
+    <div class="form-group"><label>Session</label><select class="input"></select></div>
+    <div class="doc-upload-zone" onclick="document.getElementById('modal-file-input').click()">
+      <div class="doc-upload-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+      <div class="doc-upload-text">Click to upload document</div>
+      <div class="doc-upload-sub">PDF, DOCX, TXT — max 25MB</div>
+      <input type="file" id="modal-file-input" style="display:none">
+    </div>
+    <div class="form-group" style="margin-top:14px"><label>Uploaded by</label><select class="input"><option>Party A</option><option>Party B</option><option>Both / Neutral</option></select></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeModal('upload-doc-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="closeModal('upload-doc-modal')"><i class="fa-solid fa-upload"></i>Upload</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="add-party-modal" onclick="if(event.target===this)closeModal('add-party-modal')">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Add Party</div><div class="modal-close" onclick="closeModal('add-party-modal')"><i class="fa-solid fa-xmark"></i></div></div>
+    <div class="form-group"><label>Organization / Name</label><input class="input" type="text" placeholder="e.g. TechStart GmbH"></div>
+    <div class="grid-2">
+      <div class="form-group"><label>Contact Name</label><input class="input" type="text" placeholder="Contact person"></div>
+      <div class="form-group"><label>Email</label><input class="input" type="email" placeholder="contact@org.com"></div>
+    </div>
+    <div class="form-group"><label>Role</label><select class="input"><option>Client</option><option>Provider</option><option>Contractor</option><option>Mediator</option></select></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeModal('add-party-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="addParty()"><i class="fa-solid fa-user-plus"></i>Add Party</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const sessions=[
+  {id:'IAR-2024-0039',title:'API Integration Scope',partyA:'Acme Corp',partyB:'DevStudio Ltd',disputes:3,status:'active',date:'2024-01-18'},
+  {id:'IAR-2024-0038',title:'Payment Milestone Review',partyA:'BuildIt Inc',partyB:'CodeCraft',disputes:1,status:'resolved',date:'2024-01-15'},
+  {id:'IAR-2024-0037',title:'UI/UX Deliverable Dispute',partyA:'StartupXYZ',partyB:'DesignLab',disputes:2,status:'pending',date:'2024-01-12'},
+  {id:'IAR-2024-0036',title:'Cloud Migration Scope',partyA:'Enterprise AG',partyB:'CloudOps',disputes:0,status:'active',date:'2024-01-10'},
+  {id:'IAR-2024-0035',title:'Backend Architecture',partyA:'FinTech GmbH',partyB:'ArchStack',disputes:1,status:'closed',date:'2024-01-05'},
+  {id:'IAR-2024-0034',title:'Mobile App Features',partyA:'RetailCo',partyB:'AppWorks',disputes:4,status:'resolved',date:'2023-12-28'},
+];
+const docs=[
+  {id:1,name:'Contract v1.2.pdf',size:'2.4 MB',session:'IAR-2024-0039',by:'Party A',status:'approved',date:'2024-01-18'},
+  {id:2,name:'Scope of Work.docx',size:'856 KB',session:'IAR-2024-0039',by:'Party B',status:'approved',date:'2024-01-18'},
+  {id:3,name:'Email Thread - Jan 10.txt',size:'124 KB',session:'IAR-2024-0039',by:'Party A',status:'pending',date:'2024-01-19'},
+  {id:4,name:'Technical Spec v2.pdf',size:'4.1 MB',session:'IAR-2024-0038',by:'Party B',status:'approved',date:'2024-01-15'},
+  {id:5,name:'Change Request #7.docx',size:'340 KB',session:'IAR-2024-0037',by:'Party A',status:'rejected',date:'2024-01-12'},
+  {id:6,name:'Original SLA.pdf',size:'1.8 MB',session:'IAR-2024-0036',by:'Both',status:'approved',date:'2024-01-10'},
+];
+const disputes=[
+  {id:'D-039-01',title:'Phase 2 payment not released',session:'IAR-2024-0039',by:'Party B',status:'pending',date:'2024-01-19'},
+  {id:'D-039-02',title:'Feature X was not in scope',session:'IAR-2024-0039',by:'Party A',status:'open',date:'2024-01-18'},
+  {id:'D-039-03',title:'Delivery delayed 3 weeks',session:'IAR-2024-0039',by:'Party A',status:'resolved',date:'2024-01-17',ruling:'favor-b'},
+  {id:'D-038-01',title:'Milestone 3 incomplete',session:'IAR-2024-0038',by:'Party A',status:'resolved',date:'2024-01-15',ruling:'favor-a'},
+  {id:'D-037-01',title:'Color scheme not approved',session:'IAR-2024-0037',by:'Party B',status:'open',date:'2024-01-13'},
+  {id:'D-037-02',title:'Additional revisions cost',session:'IAR-2024-0037',by:'Party A',status:'resolved',date:'2024-01-12',ruling:'mixed'},
+];
+const rulings=[
+  {id:'R-039-03',dispute:'Delivery delayed 3 weeks',session:'IAR-2024-0039',verdict:'In favor of Party B',outcome:'favor-b',date:'2024-01-17',confidence:87,accepted:true},
+  {id:'R-038-01',dispute:'Milestone 3 incomplete',session:'IAR-2024-0038',verdict:'In favor of Party A',outcome:'favor-a',date:'2024-01-15',confidence:92,accepted:true},
+  {id:'R-037-02',dispute:'Additional revisions cost',session:'IAR-2024-0037',verdict:'Split Decision',outcome:'mixed',date:'2024-01-12',confidence:74,accepted:false},
+  {id:'R-034-01',dispute:'Feature scope definition',session:'IAR-2024-0034',verdict:'In favor of Party A',outcome:'favor-a',date:'2023-12-29',confidence:95,accepted:true},
+];
+const parties=[
+  {name:'Acme Corp',contact:'Sarah Chen',role:'Client',sessions:3,disputes:5,winRate:62,status:'active'},
+  {name:'DevStudio Ltd',contact:'Mark Torres',role:'Provider',sessions:3,disputes:3,winRate:58,status:'active'},
+  {name:'BuildIt Inc',contact:'Emma Walsh',role:'Client',sessions:1,disputes:1,winRate:100,status:'active'},
+  {name:'CodeCraft',contact:'Raj Patel',role:'Provider',sessions:1,disputes:1,winRate:0,status:'inactive'},
+  {name:'StartupXYZ',contact:'Lena Koch',role:'Client',sessions:2,disputes:2,winRate:50,status:'active'},
+  {name:'DesignLab',contact:'Carlos Ruiz',role:'Provider',sessions:2,disputes:2,winRate:50,status:'active'},
+];
+const logs=[
+  {time:'09:42:11',level:'success',msg:'Ruling R-039-03 issued — favor Party B'},
+  {time:'09:40:05',level:'info',msg:'Dispute D-039-03 accepted by both parties'},
+  {time:'09:38:22',level:'info',msg:'Document "Email Thread.txt" uploaded by Party A'},
+  {time:'09:35:10',level:'warn',msg:'Document approval pending — Party B has not signed'},
+  {time:'09:30:00',level:'info',msg:'Session IAR-2024-0039 started'},
+  {time:'08:55:42',level:'success',msg:'Ruling R-038-01 accepted by both parties'},
+  {time:'08:30:17',level:'info',msg:'New party "FinTech GmbH" registered'},
+  {time:'08:15:00',level:'error',msg:'AI API timeout — retry after 30s'},
+  {time:'07:58:32',level:'success',msg:'Session IAR-2024-0038 resolved'},
+  {time:'07:30:00',level:'info',msg:'Document "Technical Spec v2.pdf" approved by both parties'},
+];
+const notifications=[
+  {icon:'fa-gavel',color:'blue',title:'Dispute D-039-02 requires your action',sub:'Party A submitted "Feature X was not in scope" — accept or reject',time:'5 min ago',read:false},
+  {icon:'fa-file-circle-check',color:'green',title:'Document approved',sub:'"Scope of Work.docx" has been approved by both parties',time:'1 hour ago',read:false},
+  {icon:'fa-scroll',color:'purple',title:'New ruling issued',sub:'AI has ruled on "Delivery delayed 3 weeks" — view result',time:'2 hours ago',read:false},
+  {icon:'fa-triangle-exclamation',color:'amber',title:'Pending signature',sub:'Party B has not signed the IAReferee agreement for session IAR-2024-0037',time:'3 hours ago',read:false},
+  {icon:'fa-handshake',color:'blue',title:'New session created',sub:'Session IAR-2024-0039 is now active',time:'Yesterday',read:false},
+  {icon:'fa-circle-check',color:'green',title:'Ruling accepted',sub:'Both parties accepted ruling R-038-01',time:'Yesterday',read:true},
+  {icon:'fa-credit-card',color:'amber',title:'Invoice due in 3 days',sub:'Your Starter plan renews Jan 23 — €15.00',time:'2 days ago',read:true},
+];
+const invoices=[
+  {id:'INV-2024-012',date:'Jan 1, 2024',amount:'€15.00',status:'paid'},
+  {id:'INV-2023-011',date:'Dec 1, 2023',amount:'€15.00',status:'paid'},
+  {id:'INV-2023-010',date:'Nov 1, 2023',amount:'€15.00',status:'paid'},
+  {id:'INV-2023-009',date:'Oct 1, 2023',amount:'€15.00',status:'paid'},
+];
+const aiRulingData={
+  'D-039-03':{verdict:'In Favor of Party B',verdictClass:'favor-b',explanation:'The contract (Section 4.2) specifies a 30-day grace period for technical delays beyond the provider\'s control. The 3-week delay was attributed to infrastructure issues on Party A\'s cloud environment, which falls under "force majeure" as defined in clause 7.1. Party B provided evidence of three written communications requesting access credentials. The delay does not constitute a breach.',reference:'Contract v1.2.pdf — Section 4.2 "Delivery Timelines", Clause 7.1 "Force Majeure Events"',confidence:87},
+  'D-038-01':{verdict:'In Favor of Party A',verdictClass:'favor-a',explanation:'The Scope of Work document (Appendix B) explicitly lists Milestone 3 as requiring a functional user authentication module with JWT support. The delivered module lacks JWT implementation and uses deprecated session-based auth instead. This constitutes an incomplete deliverable under the acceptance criteria defined in Section 3.1.',reference:'Scope of Work.docx — Appendix B, Section 3.1 "Milestone Acceptance Criteria"',confidence:92},
+};
+const quickPrompts=['Summarize the key contract terms','What are the acceptance criteria for Milestone 3?','Does the delay clause apply here?','Compare Party A and B obligations','What does Section 4.2 state?'];
+
+let currentStep=1;let agreeA=false;let agreeB=false;let uploadedFiles=[];let chatMessages=[];
+let isDark=true;let activeTab={};
+
+function navigate(page,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const target=document.getElementById('page-'+page);
+  if(target)target.classList.add('active');
+  if(el)el.classList.add('active');
+  const titles={'dashboard':'Dashboard','sessions':'Sessions','new-session':'New Session','documents':'Documents','disputes':'Disputes','rulings':'Rulings','ai-chat':'AI Assistant','parties':'Parties','activity':'Activity Log','billing':'Billing','notifications':'Notifications','settings':'Settings'};
+  document.getElementById('topbar-bc').textContent=titles[page]||page;
+}
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+
+function toggleTheme(){
+  isDark=!isDark;
+  document.documentElement.setAttribute('data-theme',isDark?'dark':'light');
+  document.getElementById('theme-btn').innerHTML=isDark?'<i class="fa-solid fa-moon"></i>':'<i class="fa-solid fa-sun"></i>';
+  const t=document.getElementById('dark-mode-toggle');
+  if(t)t.checked=isDark;
+  if(window.activityChart)window.activityChart.destroy();
+  if(window.outcomeChart)window.outcomeChart.destroy();
+  setTimeout(initCharts,50);
+}
+
+function switchTab(el,panelId){
+  const tabs=el.parentElement.querySelectorAll('.tab');
+  const panels=el.parentElement.parentElement.querySelectorAll('.tab-panel');
+  tabs.forEach(t=>t.classList.remove('active'));
+  panels.forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  const panel=document.getElementById(panelId);
+  if(panel)panel.classList.add('active');
+}
+
+function renderSessions(data,tbodyId){
+  const tb=document.getElementById(tbodyId);
+  if(!tb)return;
+  const statusBadge=s=>({active:'badge-blue',pending:'badge-amber',resolved:'badge-green',closed:'badge-gray'})[s]||'badge-gray';
+  tb.innerHTML=data.map(s=>`<tr>
+    <td><span style="font-family:var(--mono);font-size:12px;color:var(--text2)">${s.id}</span></td>
+    <td><span style="font-weight:500">${s.title}</span></td>
+    <td><div class="party-indicator party-a"><div class="party-dot"></div>${s.partyA}</div></td>
+    <td><div class="party-indicator party-b"><div class="party-dot"></div>${s.partyB}</div></td>
+    <td><span style="font-weight:500">${s.disputes}</span></td>
+    <td><span class="badge ${statusBadge(s.status)}">${s.status}</span></td>
+    <td style="color:var(--text2);font-size:12px">${s.date}</td>
+    <td><div style="display:flex;gap:6px">
+      <button class="btn btn-sm btn-secondary" onclick="openModal('new-dispute-modal')"><i class="fa-solid fa-gavel"></i></button>
+      <button class="btn btn-sm btn-secondary"><i class="fa-solid fa-eye"></i></button>
+    </div></td>
+  </tr>`).join('');
+}
+
+function filterSessions(){
+  const q=(document.getElementById('session-search')||{value:''}).value.toLowerCase();
+  const f=(document.getElementById('session-filter')||{value:''}).value;
+  const filtered=sessions.filter(s=>{
+    const match=(s.title+s.partyA+s.partyB+s.id).toLowerCase().includes(q);
+    const statusMatch=!f||s.status===f;
+    return match&&statusMatch;
+  });
+  renderSessions(filtered,'sessions-table');
+}
+
+function renderDocs(data,containerId){
+  const c=document.getElementById(containerId);if(!c)return;
+  if(!data.length){c.innerHTML='<div class="empty-state"><i class="fa-solid fa-folder-open"></i><h3>No documents</h3><p>Upload documents to get started</p></div>';return;}
+  const badge=s=>({approved:'badge-green',pending:'badge-amber',rejected:'badge-red'})[s]||'badge-gray';
+  c.innerHTML=data.map(d=>`<div class="doc-item">
+    <div class="doc-icon"><i class="fa-solid fa-file-pdf"></i></div>
+    <div class="doc-info">
+      <div class="doc-name">${d.name}</div>
+      <div class="doc-meta">${d.size} · ${d.session} · Uploaded by ${d.by} · ${d.date}</div>
+    </div>
+    <span class="badge ${badge(d.status)}">${d.status}</span>
+    <div class="doc-actions">
+      ${d.status==='pending'?`<button class="btn btn-sm btn-primary"><i class="fa-solid fa-check"></i>Approve</button>`:''}
+      <button class="btn btn-sm btn-secondary"><i class="fa-solid fa-eye"></i></button>
+      <button class="btn btn-sm btn-danger"><i class="fa-solid fa-trash"></i></button>
+    </div>
+  </div>`).join('');
+}
+function filterDocs(){
+  const q=(document.getElementById('doc-search')||{value:''}).value.toLowerCase();
+  const f=(document.getElementById('doc-filter')||{value:''}).value;
+  const filtered=docs.filter(d=>{
+    const match=(d.name+d.session+d.by).toLowerCase().includes(q);
+    const sf=!f||d.status===f;return match&&sf;
+  });
+  renderDocs(filtered,'docs-list');
+  renderDocs(filtered.filter(d=>d.status==='pending'),'docs-pending-list');
+  renderDocs(filtered.filter(d=>d.status==='approved'),'docs-approved-list');
+}
+
+function renderDisputes(){
+  const open=disputes.filter(d=>d.status==='open');
+  const pend=disputes.filter(d=>d.status==='pending');
+  const res=disputes.filter(d=>d.status==='resolved');
+  const renderList=(data,id)=>{
+    const c=document.getElementById(id);if(!c)return;
+    if(!data.length){c.innerHTML='<div class="empty-state" style="padding:32px"><i class="fa-solid fa-gavel"></i><h3>No disputes</h3><p>All disputes will appear here</p></div>';return;}
+    c.innerHTML=data.map(d=>`<div class="card card-sm" style="margin-bottom:10px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <span style="font-family:var(--mono);font-size:11px;color:var(--text3)">${d.id}</span>
+            <span class="badge ${d.status==='open'?'badge-blue':d.status==='pending'?'badge-amber':'badge-green'}">${d.status}</span>
+            ${d.ruling?`<span class="badge ${d.ruling==='favor-a'?'badge-green':d.ruling==='favor-b'?'badge-red':'badge-amber'}">${d.ruling}</span>`:''}
+          </div>
+          <div style="font-size:14px;font-weight:500;margin-bottom:4px">${d.title}</div>
+          <div style="font-size:12px;color:var(--text2)">Session: ${d.session} · Submitted by ${d.by} · ${d.date}</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          ${d.status==='pending'?`<button class="btn btn-sm btn-primary" onclick="acceptDispute('${d.id}')"><i class="fa-solid fa-check"></i>Accept</button><button class="btn btn-sm btn-danger"><i class="fa-solid fa-xmark"></i>Reject</button>`:''}
+          ${d.status==='open'?`<button class="btn btn-sm btn-primary" onclick="runAI('${d.id}')"><i class="fa-solid fa-robot"></i>Run AI</button>`:''}
+          ${d.status==='resolved'?`<button class="btn btn-sm btn-secondary" onclick="viewRuling('${d.id}')"><i class="fa-solid fa-scroll"></i>View Ruling</button>`:''}
+        </div>
+      </div>
+    </div>`).join('');
+  };
+  renderList(open,'disputes-open');
+  renderList(pend,'disputes-pending');
+  renderList(res,'disputes-resolved');
+}
+
+function renderRulings(){
+  const c=document.getElementById('rulings-list');if(!c)return;
+  c.innerHTML=rulings.map(r=>`<div class="ruling-card" style="margin-bottom:14px">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span style="font-family:var(--mono);font-size:11px;color:var(--text3)">${r.id}</span>
+          <span class="badge ${r.accepted?'badge-green':'badge-red'}">${r.accepted?'accepted':'appealed'}</span>
+          <span class="badge badge-gray">Confidence: ${r.confidence}%</span>
+        </div>
+        <div style="font-size:13px;color:var(--text2);margin-bottom:6px">Dispute: <strong style="color:var(--text)">${r.dispute}</strong></div>
+        <div class="ruling-verdict ${r.outcome}">${r.verdict}</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:6px">${r.session} · ${r.date}</div>
+      </div>
+      <button class="btn btn-sm btn-secondary" onclick="viewRulingFull('${r.id}')"><i class="fa-solid fa-eye"></i>View</button>
+    </div>
+    <div class="progress-bar" style="margin-top:12px"><div class="progress-fill" style="width:${r.confidence}%"></div></div>
+  </div>`).join('');
+}
+
+function renderParties(){
+  const tb=document.getElementById('parties-table');if(!tb)return;
+  tb.innerHTML=parties.map(p=>`<tr>
+    <td><div style="display:flex;align-items:center;gap:10px"><div class="user-avatar" style="width:30px;height:30px;font-size:11px">${p.name.substring(0,2).toUpperCase()}</div><div><div style="font-weight:500;font-size:13px">${p.name}</div><div style="font-size:11px;color:var(--text3)">${p.contact}</div></div></div></td>
+    <td><span class="badge ${p.role==='Client'?'badge-blue':'badge-purple'}">${p.role}</span></td>
+    <td>${p.sessions}</td>
+    <td>${p.disputes}</td>
+    <td><div style="display:flex;align-items:center;gap:8px">${p.winRate}%<div class="progress-bar" style="width:60px;margin:0"><div class="progress-fill" style="width:${p.winRate}%"></div></div></div></td>
+    <td><span class="badge ${p.status==='active'?'badge-green':'badge-gray'}">${p.status}</span></td>
+    <td><div style="display:flex;gap:6px"><button class="btn btn-sm btn-secondary"><i class="fa-solid fa-pen"></i></button><button class="btn btn-sm btn-danger"><i class="fa-solid fa-trash"></i></button></div></td>
+  </tr>`).join('');
+}
+
+function renderActivity(){
+  const c=document.getElementById('activity-log');if(!c)return;
+  c.innerHTML=logs.map(l=>`<div class="log-line">
+    <span class="log-time">${l.time}</span>
+    <span class="log-level ${l.level}">[${l.level.toUpperCase()}]</span>
+    <span class="log-msg">${l.msg}</span>
+  </div>`).join('');
+}
+function filterLogs(){
+  const f=document.getElementById('log-level-filter').value;
+  const filtered=f?logs.filter(l=>l.level===f):logs;
+  const c=document.getElementById('activity-log');
+  c.innerHTML=filtered.map(l=>`<div class="log-line"><span class="log-time">${l.time}</span><span class="log-level ${l.level}">[${l.level.toUpperCase()}]</span><span class="log-msg">${l.msg}</span></div>`).join('');
+}
+
+function renderNotifications(){
+  const c=document.getElementById('notifications-list');if(!c)return;
+  const colorMap={blue:'blue',green:'green',amber:'amber',purple:'purple',red:'red'};
+  c.innerHTML=notifications.map((n,i)=>`<div class="notification-item ${n.read?'':'notif-unread'}">
+    <div class="notif-icon stat-icon ${n.color}"><i class="fa-solid ${n.icon}"></i></div>
+    <div class="notif-content">
+      <div class="notif-title">${n.title}</div>
+      <div class="notif-sub">${n.sub}</div>
+      <div class="notif-time">${n.time}</div>
+    </div>
+    ${!n.read?`<button class="btn btn-sm btn-secondary" onclick="markRead(${i})">Mark read</button>`:''}
+  </div>`).join('');
+}
+function markRead(i){notifications[i].read=true;renderNotifications();updateBadges();}
+function markAllRead(){notifications.forEach(n=>n.read=true);renderNotifications();updateBadges();}
+function updateBadges(){
+  const unread=notifications.filter(n=>!n.read).length;
+  document.getElementById('badge-notif').textContent=unread;
+}
+
+function renderInvoices(){
+  const tb=document.getElementById('invoice-table');if(!tb)return;
+  tb.innerHTML=invoices.map(inv=>`<tr>
+    <td><span style="font-family:var(--mono);font-size:12px">${inv.id}</span></td>
+    <td>${inv.date}</td>
+    <td><strong>${inv.amount}</strong></td>
+    <td><span class="badge badge-green">${inv.status}</span></td>
+    <td><button class="btn btn-sm btn-secondary"><i class="fa-solid fa-download"></i>PDF</button></td>
+  </tr>`).join('');
+}
+
+function renderDashboardTimeline(){
+  const c=document.getElementById('dashboard-timeline');if(!c)return;
+  const items=[
+    {dot:'done',icon:'fa-check',title:'Ruling issued on D-039-03',sub:'Favor of Party B · 87% confidence',time:'09:42'},
+    {dot:'done',icon:'fa-check',title:'Dispute D-039-03 accepted',sub:'Both parties confirmed',time:'09:40'},
+    {dot:'active',icon:'fa-clock',title:'Document pending approval',sub:'"Email Thread.txt" awaiting sign-off',time:'09:38'},
+    {dot:'',icon:'fa-handshake',title:'Session IAR-2024-0039 started',sub:'Acme Corp vs DevStudio Ltd',time:'09:30'},
+  ];
+  c.innerHTML=items.map(i=>`<div class="timeline-item">
+    <div class="timeline-dot ${i.dot}"><i class="fa-solid ${i.icon}" style="font-size:10px"></i></div>
+    <div class="timeline-content">
+      <div class="timeline-title">${i.title}</div>
+      <div class="timeline-sub">${i.sub}</div>
+      <div class="timeline-time">${i.time} today</div>
+    </div>
+  </div>`).join('');
+}
+
+function initCharts(){
+  const isDarkMode=document.documentElement.getAttribute('data-theme')==='dark';
+  const textColor=isDarkMode?'rgba(139,145,168,0.8)':'rgba(90,96,128,0.8)';
+  const gridColor=isDarkMode?'rgba(255,255,255,0.05)':'rgba(0,0,0,0.05)';
+  Chart.defaults.color=textColor;
+  Chart.defaults.font.family='DM Sans';
+  Chart.defaults.font.size=11;
+
+  const actCtx=document.getElementById('chart-activity');
+  if(actCtx){
+    window.activityChart=new Chart(actCtx,{
+      type:'line',
+      data:{
+        labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+        datasets:[
+          {label:'Sessions',data:[3,5,4,7,6,2,4],borderColor:'#4F8EF7',backgroundColor:'rgba(79,142,247,0.08)',tension:0.4,fill:true,pointRadius:3,pointBackgroundColor:'#4F8EF7'},
+          {label:'Disputes',data:[1,2,3,4,2,1,2],borderColor:'#A78BFA',backgroundColor:'rgba(167,139,250,0.08)',tension:0.4,fill:true,pointRadius:3,pointBackgroundColor:'#A78BFA'},
+        ]
+      },
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{boxWidth:8,usePointStyle:true,padding:16}}},scales:{x:{grid:{color:gridColor},border:{display:false}},y:{grid:{color:gridColor},border:{display:false},beginAtZero:true,ticks:{stepSize:2}}}}
+    });
+  }
+
+  const outCtx=document.getElementById('chart-outcomes');
+  if(outCtx){
+    window.outcomeChart=new Chart(outCtx,{
+      type:'doughnut',
+      data:{
+        labels:['Party A Win','Party B Win','Split','Pending'],
+        datasets:[{data:[18,12,8,4],backgroundColor:['#34D399','#4F8EF7','#FBBF24','rgba(139,145,168,0.3)'],borderWidth:0,hoverOffset:6}]
+      },
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,usePointStyle:true,padding:14}}},cutout:'68%'}
+    });
+  }
+}
+
+function nsNext(step){
+  document.getElementById('new-step-'+step).style.display='none';
+  document.getElementById('new-step-'+(step+1)).style.display='block';
+  document.getElementById('step-c-'+step).className='step-circle done';
+  document.getElementById('step-c-'+step).innerHTML='<i class="fa-solid fa-check" style="font-size:10px"></i>';
+  if(document.getElementById('step-con-'+step))document.getElementById('step-con-'+step).classList.add('done');
+  if(step+1<=5){
+    document.getElementById('step-c-'+(step+1)).className='step-circle current';
+    const lbl=document.getElementById('step-l-'+(step+1));
+    if(lbl){lbl.classList.add('current');}
+  }
+  if(step+1===5){
+    const code='IAR-2024-00'+Math.floor(40+Math.random()*10);
+    document.getElementById('created-session-code').textContent=code;
+  }
+  currentStep=step+1;
+}
+function nsPrev(step){
+  document.getElementById('new-step-'+step).style.display='none';
+  document.getElementById('new-step-'+(step-1)).style.display='block';
+  document.getElementById('step-c-'+(step-1)).className='step-circle current';
+  document.getElementById('step-c-'+(step-1)).innerHTML=step-1;
+  document.getElementById('step-c-'+step).className='step-circle';
+  document.getElementById('step-c-'+step).innerHTML=step;
+  if(document.getElementById('step-con-'+(step-1)))document.getElementById('step-con-'+(step-1)).classList.remove('done');
+}
+
+function toggleAgree(party){
+  if(party==='a')agreeA=true;
+  if(party==='b')agreeB=true;
+  const elA=document.getElementById('agree-a');
+  const elB=document.getElementById('agree-b');
+  if(agreeA){elA.classList.add('yes');elA.querySelector('i').style.display='';}
+  if(agreeB){elB.classList.add('yes');elB.querySelector('i').style.display='';}
+  document.getElementById('ns-launch-btn').disabled=!(agreeA&&agreeB);
+}
+
+function handleFileInput(event){
+  const files=Array.from(event.target.files);
+  files.forEach(f=>addDocItem(f.name,formatSize(f.size)));
+}
+function handleDrop(event){
+  event.preventDefault();
+  document.getElementById('upload-zone').classList.remove('drag-over');
+  const files=Array.from(event.dataTransfer.files);
+  files.forEach(f=>addDocItem(f.name,formatSize(f.size)));
+}
+function addDocItem(name,size){
+  const list=document.getElementById('uploaded-docs-list');
+  const div=document.createElement('div');
+  div.className='doc-item';
+  div.innerHTML=`<div class="doc-icon"><i class="fa-solid fa-file-pdf"></i></div><div class="doc-info"><div class="doc-name">${name}</div><div class="doc-meta">${size} · Pending approval</div></div><span class="badge badge-amber">pending</span><button class="btn btn-sm btn-danger" onclick="this.parentElement.remove()"><i class="fa-solid fa-trash"></i></button>`;
+  list.appendChild(div);
+}
+function formatSize(bytes){if(bytes<1024)return bytes+'B';if(bytes<1048576)return(bytes/1024).toFixed(1)+' KB';return(bytes/1048576).toFixed(1)+' MB';}
+function copySessionCode(){navigator.clipboard.writeText(document.getElementById('created-session-code').textContent);showToast('Session code copied!');}
+function copyApiKey(){navigator.clipboard.writeText('sk-iareferee-real-key-here');showToast('API key copied!');}
+
+function acceptDispute(id){
+  const d=disputes.find(x=>x.id===id);
+  if(d){d.status='open';}
+  renderDisputes();
+  showToast('Dispute accepted by both parties — ready for AI analysis');
+}
+function runAI(id){
+  const data=aiRulingData[id]||{verdict:'In Favor of Party A',verdictClass:'favor-a',explanation:'Based on the contract terms and submitted documents, the AI has determined that Party A\'s claims are substantiated by the project scope definition outlined in the primary agreement. The deliverables in question were explicitly included within the agreed scope.',reference:'Contract v1.2.pdf — Section 2.1 "Project Scope"',confidence:81};
+  document.getElementById('ruling-modal-title').textContent='AI Ruling — '+id;
+  document.getElementById('ruling-modal-session').textContent='Session: IAR-2024-0039';
+  document.getElementById('ruling-modal-content').innerHTML=`<div class="ai-typing" id="ai-typing"><span></span><span></span><span></span><div style="font-size:12px;color:var(--text2);margin-left:6px">AI is analyzing documents...</div></div>`;
+  openModal('ruling-modal');
+  setTimeout(()=>{
+    document.getElementById('ruling-modal-content').innerHTML=`<div class="ruling-verdict ${data.verdictClass}" style="font-size:20px;font-weight:600;margin-bottom:4px">${data.verdict}</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px"><span class="badge badge-gray">Confidence: ${data.confidence}%</span><div class="progress-bar" style="flex:1;margin:0"><div class="progress-fill" style="width:${data.confidence}%"></div></div></div>
+    <div class="ruling-body">${data.explanation}</div>
+    <div class="ruling-ref"><div class="ruling-ref-label">Document Reference</div>${data.reference}</div>`;
+    const d=disputes.find(x=>x.id===id);
+    if(d){d.status='resolved';d.ruling=data.verdictClass;}
+    renderDisputes();
+  },2200);
+}
+function viewRuling(disputeId){
+  const idMap={'D-039-03':'R-039-03','D-038-01':'R-038-01'};
+  const rid=idMap[disputeId];
+  if(rid)viewRulingFull(rid);
+}
+function viewRulingFull(rid){
+  const r=rulings.find(x=>x.id===rid);
+  if(!r)return;
+  const data=Object.values(aiRulingData)[rid==='R-039-03'?0:1]||aiRulingData['D-039-03'];
+  document.getElementById('ruling-modal-title').textContent='Ruling '+r.id;
+  document.getElementById('ruling-modal-session').textContent='Session: '+r.session+' · '+r.date;
+  document.getElementById('ruling-modal-content').innerHTML=`<div class="ruling-verdict ${r.outcome}" style="font-size:20px;font-weight:600;margin-bottom:4px">${r.verdict}</div>
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px"><span class="badge badge-gray">Confidence: ${r.confidence}%</span><div class="progress-bar" style="flex:1;margin:0"><div class="progress-fill" style="width:${r.confidence}%"></div></div></div>
+  <div class="ruling-body">${data.explanation}</div>
+  <div class="ruling-ref"><div class="ruling-ref-label">Document Reference</div>${data.reference}</div>`;
+  openModal('ruling-modal');
+}
+
+function submitDispute(){closeModal('new-dispute-modal');showToast('Dispute submitted — awaiting both party acceptance');}
+function quickCreateSession(){closeModal('new-session-modal');showToast('Session created successfully!');}
+function addParty(){closeModal('add-party-modal');showToast('Party added successfully!');}
+function selectPlan(el,plan){showToast(plan==='starter'?'You are already on the Starter plan':'Redirecting to checkout...');}
+
+const chatResponses=['Based on the documents in this session, the contract clearly defines the scope in Section 2. The deliverables listed include front-end development, API integration, and testing. Any work outside these categories would require a change order.','The acceptance criteria for Milestone 3 are defined in Appendix B of the Scope of Work document. They require a functional authentication module with JWT support, passing all unit tests, and documented API endpoints.','The delay clause (Section 4.2) applies when delays are caused by infrastructure issues outside the provider\'s control. However, the clause requires written notice within 48 hours of the delay beginning — please check if this was provided.','Party A is responsible for providing access credentials, approval of deliverables within 5 business days, and payment within 30 days of invoice. Party B must deliver according to the timeline and notify of any blockers.'];
+let chatReplyIndex=0;
+function sendChat(){
+  const input=document.getElementById('chat-input');
+  const msg=input.value.trim();
+  if(!msg)return;
+  const container=document.getElementById('chat-messages');
+  const time=new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+  container.innerHTML+=`<div class="chat-bubble user"><div class="bubble-avatar user-av">JD</div><div><div class="bubble-body">${msg}</div><div class="bubble-time">${time}</div></div></div>`;
+  input.value='';
+  container.innerHTML+=`<div class="chat-bubble ai" id="typing-indicator"><div class="bubble-avatar"><i class="fa-solid fa-robot"></i></div><div><div class="bubble-body"><div class="ai-typing"><span></span><span></span><span></span></div></div></div></div>`;
+  container.scrollTop=container.scrollHeight;
+  setTimeout(()=>{
+    const typing=document.getElementById('typing-indicator');
+    if(typing)typing.remove();
+    const reply=chatResponses[chatReplyIndex%chatResponses.length];
+    chatReplyIndex++;
+    container.innerHTML+=`<div class="chat-bubble ai"><div class="bubble-avatar"><i class="fa-solid fa-robot"></i></div><div><div class="bubble-body">${reply}</div><div class="bubble-time">${time}</div></div></div>`;
+    container.scrollTop=container.scrollHeight;
+  },1600);
+}
+
+function renderQuickPrompts(){
+  const c=document.getElementById('quick-prompts');if(!c)return;
+  c.innerHTML=quickPrompts.map(p=>`<button class="btn btn-secondary btn-sm" style="text-align:left;white-space:normal;height:auto;padding:6px 10px;font-size:12px" onclick="document.getElementById('chat-input').value='${p}';sendChat()">${p}</button>`).join('');
+}
+
+function populateDisputeSelects(){
+  const opts=sessions.map(s=>`<option value="${s.id}">${s.id} — ${s.title}</option>`).join('');
+  const sel=document.getElementById('dispute-session-select');
+  if(sel)sel.innerHTML=opts;
+  const filt=document.getElementById('dispute-session-filter');
+  if(filt)filt.innerHTML='<option value="">All sessions</option>'+opts;
+}
+
+let toastTimeout;
+function showToast(msg){
+  let t=document.getElementById('toast');
+  if(!t){t=document.createElement('div');t.id='toast';t.style.cssText='position:fixed;bottom:24px;right:24px;background:var(--card);border:1px solid var(--border-md);border-radius:var(--radius-sm);padding:12px 18px;font-size:13px;box-shadow:var(--shadow);z-index:999;transition:all 0.3s;opacity:0;transform:translateY(10px)';document.body.appendChild(t);}
+  t.textContent=msg;t.style.opacity='1';t.style.transform='translateY(0)';
+  clearTimeout(toastTimeout);
+  toastTimeout=setTimeout(()=>{t.style.opacity='0';t.style.transform='translateY(10px)';},3000);
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  renderSessions(sessions,'recent-sessions-table');
+  renderSessions(sessions,'sessions-table');
+  filterDocs();
+  renderDisputes();
+  renderRulings();
+  renderParties();
+  renderActivity();
+  renderNotifications();
+  renderInvoices();
+  renderDashboardTimeline();
+  renderQuickPrompts();
+  populateDisputeSelects();
+  setTimeout(initCharts,100);
+  document.getElementById('dark-mode-toggle').checked=true;
+});
+</script>
+</body>
+</html>
